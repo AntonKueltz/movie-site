@@ -7,6 +7,7 @@ from movie_site.db import (
     create_user,
     create_review,
     read_movie,
+    read_movies,
     read_reviews_by_movie,
     read_user,
 )
@@ -25,6 +26,7 @@ class Movie:
     year: int
     img_url: str
     description: str
+    avg_rating: float | None
 
 
 @strawberry.type
@@ -75,6 +77,10 @@ Info = _Info[Context, RootValueType]
 
 @strawberry.type
 class Query:
+    @strawberry.field
+    def movies() -> List[Movie]:
+        return read_movies()
+
     @strawberry.field
     def movie(movie_id: int) -> Movie:
         return read_movie(movie_id)

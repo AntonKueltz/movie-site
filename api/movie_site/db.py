@@ -23,6 +23,8 @@ class Movie(Base):
     year = Column(Integer)
     img_url = Column(String)
     description = Column(String)
+    avg_rating = Column(Float, nullable=True)
+    review_count = Column(Integer, default=0)
 
 
 class User(Base):
@@ -48,6 +50,10 @@ def create_movie(title: str, year: int, img_url: str, description: str) -> Movie
     db.add(movie)
     db.commit()
     return movie
+
+
+def read_movies() -> List[Movie]:
+    return db.query(Movie).all()
 
 
 def read_movie(movie_id: int) -> Movie | None:
@@ -84,7 +90,17 @@ def read_user(user_id: int) -> User | None:
 def create_review(user_id: int, movie_id: int, rating: float, text: str) -> Review:
     review = Review(user_id=user_id, movie_id=movie_id, rating=rating, text=text)
     db.add(review)
+
+    movie = db.query(Movie).get(movie_id)
+    current_average = movie.avg_rating if movie.avg_rating is not None else 0.0
+    avg_rating = (current_average * movie.review_count + rating) / (movie.review_count + 1)
+    db.query(Movie).filter(Movie.id == movie_id).update({
+        Movie.avg_rating: avg_rating,
+        Movie.review_count: movie.review_count + 1
+    })
+   
     db.commit()
+
     return review
 
 
