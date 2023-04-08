@@ -1,11 +1,22 @@
 import { gql, useQuery } from '@apollo/client';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
+import CssBaseline from '@mui/material/CssBaseline';
 import Grid from '@mui/material/Grid';
+import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { CardActionArea } from '@mui/material';
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
 
 const GET_MOVIES = gql`
   query GetMovies {
@@ -19,6 +30,21 @@ const GET_MOVIES = gql`
   }
 `;
 
+function NavBar() {
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
+            Shitty Movies
+          </Typography>
+          <Button color="inherit">Login</Button>
+        </Toolbar>
+      </AppBar>
+    </Box>
+  );
+}
+
 function MovieList() {
   const { loading, error, data } = useQuery(GET_MOVIES);
 
@@ -26,14 +52,12 @@ function MovieList() {
   if (error) return <p>Error : {error.message}</p>;
 
   return data.movies.map(({ title, year, imgUrl, avgRating }) => (
-    <Grid item xs={4}>
+    <Grid item xs={3}>
       <Card sx={{ maxWidth: 270 }}>
         <CardActionArea>
           <CardMedia
             component="img"
             image={`${imgUrl}`}
-            width="270"
-            height="400"
             alt={`${title} Poster`}
           />
           <CardContent>
@@ -55,15 +79,14 @@ function MovieList() {
 
 export default function App() {
   return (
-    <div>
-      <Typography variant="h3" component="div">
-        Shitty Movies
-      </Typography>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <NavBar />
       <Box sx={{ flexGrow: 1 }}>
         <Grid container spacing={2}>
           <MovieList />
         </Grid>
       </Box>
-    </div>
+    </ThemeProvider>
   );
 }
