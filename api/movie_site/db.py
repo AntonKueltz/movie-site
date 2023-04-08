@@ -1,3 +1,5 @@
+from typing import List
+
 from argon2 import PasswordHasher
 from argon2.exceptions import Argon2Error
 from sqlalchemy import Column, Float, Integer, String, create_engine
@@ -48,8 +50,8 @@ def create_movie(title: str, year: int, img_url: str, description: str) -> Movie
     return movie
 
 
-def read_movie(title: str) -> Movie | None:
-    return db.query(Movie).where(Movie.title == title).one_or_none()
+def read_movie(movie_id: int) -> Movie | None:
+    return db.query(Movie).get(movie_id)
 
 
 def create_user(username: str, password: str) -> User:
@@ -77,3 +79,14 @@ def authenticate_user(username: str, password: str) -> User | None:
 
 def read_user(user_id: int) -> User | None:
     return db.query(User).get(user_id)
+
+
+def create_review(user_id: int, movie_id: int, rating: float, text: str) -> Review:
+    review = Review(user_id=user_id, movie_id=movie_id, rating=rating, text=text)
+    db.add(review)
+    db.commit()
+    return review
+
+
+def read_reviews_by_movie(movie_id: int) -> List[Review]:
+    return db.query(Review).where(Review.movie_id == movie_id)

@@ -1,6 +1,15 @@
 from functools import cached_property
+from typing import List
 
-from movie_site.db import authenticate_user, create_movie, create_user, read_movie, read_user
+from movie_site.db import (
+    authenticate_user,
+    create_movie,
+    create_user,
+    create_review,
+    read_movie,
+    read_reviews_by_movie,
+    read_user,
+)
 from movie_site.session import generate_user_session_token, get_user_id_from_token
 
 import strawberry
@@ -11,6 +20,7 @@ from strawberry.types.info import RootValueType
 
 @strawberry.type
 class Movie:
+    id: int
     title: str
     year: int
     img_url: str
@@ -21,6 +31,15 @@ class Movie:
 class User:
     id: int
     username: str
+
+
+@strawberry.type
+class Review:
+    id: int
+    user_id: int
+    movie_id: int
+    rating: float
+    text: str
 
 
 @strawberry.type
@@ -43,7 +62,10 @@ class Context(BaseContext):
         if not self.request:
             return None
 
-        token = self.request.headers.get("Authorization", None)
+        token = self.request.headers.get("Authorization")
+        if not token:
+            return None
+
         user_id = get_user_id_from_token(token)
         return read_user(user_id)
 
@@ -54,18 +76,12 @@ Info = _Info[Context, RootValueType]
 @strawberry.type
 class Query:
     @strawberry.field
-    def movie(title: str) -> Movie:
-        movie = read_movie(title)
-        return Movie(
-            title=movie.title,
-            year=movie.year,
-            img_url=movie.img_url,
-            description=movie.description
-        )
-
+    def movie(movie_id: int) -> Movie:
+        return read_movie(movie_id)
+    
     @strawberry.field
-    def get_authenticated_user(self, info: Info) -> User | None:
-        return info.context.user
+    def reviews(movie_id: int) -> List[Review]:
+        return read_reviews_by_movie(movie_id)
 
 
 @strawberry.type
@@ -87,13 +103,14 @@ class Mutation:
 
     @strawberry.mutation
     def add_movie(self, title: str, year: int, img_url: str, description: str) -> Movie:
-        movie = create_movie(title, year, img_url, description)
-        return Movie(
-            title=movie.title,
-            year=movie.year,
-            img_url=movie.img_url,
-            description=movie.description
-        )
+        return create_movie(title, year, img_url, description)
+    
+    @strawberry.mutation
+    def add_review(self, info: Info, movie_id: int, rating: float, text: str) -> Review:
+        if not info.context.user:
+            raise Exception("Unauthorized")
+        
+        return create_review(info.context.user.id, movie_id, rating, text)
 
     
 async def get_context() -> Context:
