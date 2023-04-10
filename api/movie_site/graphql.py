@@ -38,7 +38,7 @@ class User:
 @strawberry.type
 class Review:
     id: int
-    user_id: int
+    username: str
     movie_id: int
     rating: float
     text: str
@@ -87,7 +87,19 @@ class Query:
     
     @strawberry.field
     def reviews(movie_id: int) -> List[Review]:
-        return read_reviews_by_movie(movie_id)
+        result = []
+
+        for review in read_reviews_by_movie(movie_id):
+            username = read_user(review.user_id).username
+            result.append(Review(
+                id=review.id,
+                username=username,
+                movie_id=review.movie_id,
+                rating=review.rating,
+                text=review.text,
+            ))
+        
+        return result
 
 
 @strawberry.type
